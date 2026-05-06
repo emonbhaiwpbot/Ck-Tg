@@ -4,36 +4,6 @@ const saveUser = require("../utils/saveUser");
 
 const forms = {};
 
-function checkForm(text) {
-
-    const required = [
-        "Full Name:",
-        "Username",
-        "Age:",
-        "Country:",
-        "Experience Level:",
-        "Trading Type:",
-        "Preferred Strategy:",
-        "Monthly Goal:",
-        "Do you have a trading account?",
-        "Platform Name:",
-        "Portfolio Size",
-        "Do you agree to follow all group rules?"
-    ];
-
-    for (const item of required) {
-        if (!text.includes(item)) {
-            return false;
-        }
-    }
-
-    if (text.length < 200) {
-        return false;
-    }
-
-    return true;
-}
-
 bot.on("message", async (msg) => {
 
     if (!msg.text) return;
@@ -51,34 +21,10 @@ bot.onText(/\/done/, async (msg) => {
     const form = forms[user.id];
 
     if (!form) {
-        return bot.sendMessage(
-            msg.chat.id,
-            `❌ আগে ফর্ম পূরণ করে পাঠান তারপর /done দিন।
-
-🏷️ ${config.brand}`
-        );
-    }
-
-    const valid = checkForm(form);
-
-    if (!valid) {
 
         return bot.sendMessage(
             msg.chat.id,
-            `⚠️ ফর্মটি সঠিকভাবে পূরণ করা হয়নি।
-
-দয়া করে সব তথ্য ঠিকভাবে দিন।
-কোনো কিছু বাদ দিবেন না।
-
-📌 Full Name
-📌 Username
-📌 Age
-📌 Country
-📌 Trading Details
-📌 Portfolio
-📌 Rules Agreement
-
-সব পূরণ করে আবার /done দিন।
+            `❌ আগে ফর্ম পাঠান তারপর /done দিন।
 
 🏷️ ${config.brand}`
         );
@@ -107,14 +53,16 @@ bot.onText(/\/done/, async (msg) => {
 
 ━━━━━━━━━━━━━━━
 
+📄 USER FORM:
+
 ${form}
 
 ━━━━━━━━━━━━━━━
 
-✅ Approve করতে:
+✅ Approve:
 /approve ${user.id}
 
-❌ Reject করতে:
+❌ Reject:
 /reject ${user.id}
 
 🏷️ ${config.brand}
