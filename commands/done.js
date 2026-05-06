@@ -3,25 +3,39 @@ const config = global.config;
 const saveUser = require("../utils/saveUser");
 
 const forms = {};
-const waitingForForm = {};
 
-bot.onText(/\/start/, async (msg) => {
-
-    waitingForForm[msg.from.id] = true;
-
-});
-
-bot.on("message", async (msg) => {
-
-    if (!msg.text) return;
-
-    if (msg.text.startsWith("/")) return;
+bot.onText(/\/sent([\s\S]*)/, async (msg, match) => {
 
     const userId = msg.from.id;
 
-    if (!waitingForForm[userId]) return;
+    const formText = match[1]?.trim();
 
-    forms[userId] = msg.text;
+    if (!formText) {
+
+        return bot.sendMessage(
+            msg.chat.id,
+            `❌ Form লিখে /sent দিন।
+
+Example:
+
+/sent
+নাম: Your Name
+
+🏷️ ${config.brand}`
+        );
+
+    }
+
+    forms[userId] = formText;
+
+    bot.sendMessage(
+        msg.chat.id,
+        `✅ Form Save হয়েছে।
+
+এখন /done দিন Submit করার জন্য।
+
+🏷️ ${config.brand}`
+    );
 
 });
 
@@ -38,12 +52,18 @@ bot.onText(/\/done/, async (msg) => {
             msg.chat.id,
             `❌ আগে Form পাঠান তারপর /done দিন।
 
+Example:
+
+/sent
+আপনার form
+
+তারপর:
+/done
+
 🏷️ ${config.brand}`
         );
 
     }
-
-    waitingForForm[userId] = false;
 
     const data = {
         id: user.id,
@@ -86,7 +106,7 @@ ${form}
 
     bot.sendMessage(
         msg.chat.id,
-        `✅ আপনার Form সফলভাবে জমা হয়েছে।
+        `✅ আপনার Form সফলভাবে Submit হয়েছে।
 
 ⏳ এখন Admin approval এর জন্য অপেক্ষা করুন।
 
