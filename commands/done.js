@@ -2,7 +2,37 @@ const bot = global.bot;
 const config = global.config;
 const saveUser = require("../utils/saveUser");
 
-const pendingForms = {};
+const forms = {};
+
+function checkForm(text) {
+
+    const required = [
+        "Full Name:",
+        "Username",
+        "Age:",
+        "Country:",
+        "Experience Level:",
+        "Trading Type:",
+        "Preferred Strategy:",
+        "Monthly Goal:",
+        "Do you have a trading account?",
+        "Platform Name:",
+        "Portfolio Size",
+        "Do you agree to follow all group rules?"
+    ];
+
+    for (const item of required) {
+        if (!text.includes(item)) {
+            return false;
+        }
+    }
+
+    if (text.length < 200) {
+        return false;
+    }
+
+    return true;
+}
 
 bot.on("message", async (msg) => {
 
@@ -10,68 +40,87 @@ bot.on("message", async (msg) => {
 
     if (msg.text.startsWith("/")) return;
 
-    pendingForms[msg.from.id] = msg.text;
+    forms[msg.from.id] = msg.text;
 
 });
 
 bot.onText(/\/done/, async (msg) => {
 
     const user = msg.from;
-    const form = pendingForms[user.id];
+
+    const form = forms[user.id];
 
     if (!form) {
         return bot.sendMessage(
             msg.chat.id,
-            `❌ আগে ফর্ম পূরণ করে পাঠান তারপর /done দিন\n\n🏷️ ${config.brand}`
+            `❌ আগে ফর্ম পূরণ করে পাঠান তারপর /done দিন।
+
+🏷️ ${config.brand}`
         );
     }
 
-    const userData = {
+    const valid = checkForm(form);
+
+    if (!valid) {
+
+        return bot.sendMessage(
+            msg.chat.id,
+            `⚠️ ফর্মটি সঠিকভাবে পূরণ করা হয়নি।
+
+দয়া করে সব তথ্য ঠিকভাবে দিন।
+কোনো কিছু বাদ দিবেন না।
+
+📌 Full Name
+📌 Username
+📌 Age
+📌 Country
+📌 Trading Details
+📌 Portfolio
+📌 Rules Agreement
+
+সব পূরণ করে আবার /done দিন।
+
+🏷️ ${config.brand}`
+        );
+
+    }
+
+    const data = {
         id: user.id,
         name: user.first_name || "No Name",
         username: user.username || "No Username",
         form: form,
-        status: "Pending"
+        status: "Pending",
+        time: new Date().toLocaleString()
     };
 
-    await saveUser(userData);
+    await saveUser(data);
 
-    const adminMessage = `
-📥 নতুন Registration Request এসেছে
+    const adminText = `
+📥 নতুন Registration এসেছে
 
 👤 নামঃ ${user.first_name}
 
-🔗 ইউজারনেমঃ @${user.username || "none"}
+🔗 Usernameঃ @${user.username || "none"}
 
-🆔 ইউজার আইডিঃ ${user.id}
+🆔 UIDঃ ${user.id}
 
 ━━━━━━━━━━━━━━━
-
-📄 User Form:
 
 ${form}
 
 ━━━━━━━━━━━━━━━
+
+✅ Approve করতে:
+/approve ${user.id}
+
+❌ Reject করতে:
+/reject ${user.id}
+
 🏷️ ${config.brand}
 `;
 
-    bot.sendMessage(config.adminId, adminMessage, {
-        parse_mode: "Markdown",
-        reply_markup: {
-            inline_keyboard: [
-                [
-                    {
-                        text: "✅ Approve",
-                        callback_data: `approve_${user.id}`
-                    },
-                    {
-                        text: "❌ Reject",
-                        callback_data: `reject_${user.id}`
-                    }
-                ]
-            ]
-        }
-    });
+    bot.sendMessage(config.adminId, adminText);
 
     bot.sendMessage(
         msg.chat.id,
