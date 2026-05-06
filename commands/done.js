@@ -1,70 +1,83 @@
 const bot = global.bot;
 const config = global.config;
-const saveUser = require('../utils/saveUser');
+const saveUser = require("../utils/saveUser");
 
-const userData = {};
+const pendingForms = {};
 
-bot.on('message', async (msg) => {
+bot.on("message", async (msg) => {
 
     if (!msg.text) return;
 
-    if (msg.text.startsWith('/')) return;
+    if (msg.text.startsWith("/")) return;
 
-    userData[msg.from.id] = msg.text;
+    pendingForms[msg.from.id] = msg.text;
 
 });
 
 bot.onText(/\/done/, async (msg) => {
 
     const user = msg.from;
+    const form = pendingForms[user.id];
 
-    const data = userData[user.id];
-
-    if (!data) {
-        return bot.sendMessage(msg.chat.id,
+    if (!form) {
+        return bot.sendMessage(
+            msg.chat.id,
             `❌ আগে ফর্ম পূরণ করে পাঠান তারপর /done দিন\n\n🏷️ ${config.brand}`
         );
     }
 
-    const saveData = {
+    const userData = {
         id: user.id,
         name: user.first_name || "No Name",
         username: user.username || "No Username",
-        number: msg.contact ? msg.contact.phone_number : "Hidden",
-        form: data,
-        time: new Date().toLocaleString()
+        form: form,
+        status: "Pending"
     };
 
-    await saveUser(saveData);
+    await saveUser(userData);
 
-    const adminText = `
-📥 *নতুন রেজিস্ট্রেশন এসেছে*
+    const adminMessage = `
+📥 নতুন Registration Request এসেছে
 
 👤 নামঃ ${user.first_name}
 
-🔗 ইউজারনেমঃ @${user.username || "None"}
+🔗 ইউজারনেমঃ @${user.username || "none"}
 
 🆔 ইউজার আইডিঃ ${user.id}
 
-📄 ফর্মঃ
+━━━━━━━━━━━━━━━
 
-${data}
+📄 User Form:
+
+${form}
 
 ━━━━━━━━━━━━━━━
 🏷️ ${config.brand}
 `;
 
-    bot.sendMessage(config.adminId, adminText, {
-        parse_mode: 'Markdown'
+    bot.sendMessage(config.adminId, adminMessage, {
+        parse_mode: "Markdown",
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: "✅ Approve",
+                        callback_data: `approve_${user.id}`
+                    },
+                    {
+                        text: "❌ Reject",
+                        callback_data: `reject_${user.id}`
+                    }
+                ]
+            ]
+        }
     });
 
-    bot.sendMessage(msg.chat.id,
-        `✅ আপনার রিকোয়েস্ট সফলভাবে জমা হয়েছে।
+    bot.sendMessage(
+        msg.chat.id,
+        `✅ আপনার ফর্ম সফলভাবে জমা হয়েছে।
 
-⏳ একটু অপেক্ষা করুন...
-অ্যাডমিন খুব দ্রুত আপনার রিকোয়েস্ট রিভিউ করবে।
-
-❤️ ধন্যবাদ ${user.first_name}
+⏳ এখন Admin approval এর জন্য অপেক্ষা করুন।
 
 🏷️ ${config.brand}`
     );
