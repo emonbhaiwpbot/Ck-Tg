@@ -1,74 +1,54 @@
 const bot = global.bot;
 const config = global.config;
 
-bot.on("callback_query", async (query) => {
+bot.onText(/\/approve (.+)/, async (msg, match) => {
 
-    const adminId = query.from.id;
-
-    if (adminId.toString() !== config.adminId.toString()) {
-        return bot.answerCallbackQuery(query.id, {
-            text: "❌ Only Admin Can Use This"
-        });
+    if (msg.from.id.toString() !== config.adminId.toString()) {
+        return;
     }
 
-    const data = query.data;
+    const userId = match[1];
 
-    if (data.startsWith("approve_")) {
-
-        const userId = data.split("_")[1];
-
-        bot.sendMessage(
-            userId,
-            `🎉 অভিনন্দন!
+    bot.sendMessage(
+        userId,
+        `🎉 অভিনন্দন!
 
 ✅ আপনার Registration Approved হয়েছে।
 
-এখন আপনি আমাদের Trading Community তে join করতে পারবেন।
+এখন আপনি আমাদের Trading Community তে Join করতে পারবেন।
 
 ❤️ Welcome To ${config.brand}`
-        );
+    );
 
-        bot.editMessageReplyMarkup(
-            { inline_keyboard: [] },
-            {
-                chat_id: query.message.chat.id,
-                message_id: query.message.message_id
-            }
-        );
+    bot.sendMessage(
+        msg.chat.id,
+        `✅ User Approved Successfully`
+    );
 
-        bot.answerCallbackQuery(query.id, {
-            text: "✅ User Approved"
-        });
+});
 
+bot.onText(/\/reject (.+)/, async (msg, match) => {
+
+    if (msg.from.id.toString() !== config.adminId.toString()) {
+        return;
     }
 
-    if (data.startsWith("reject_")) {
+    const userId = match[1];
 
-        const userId = data.split("_")[1];
+    bot.sendMessage(
+        userId,
+        `❌ দুঃখিত!
 
-        bot.sendMessage(
-            userId,
-            `❌ দুঃখিত!
-
-আপনার Registration আপাতত Approved হয়নি।
+আপনার Registration Reject করা হয়েছে।
 
 সঠিক তথ্য দিয়ে আবার চেষ্টা করুন।
 
 🏷️ ${config.brand}`
-        );
+    );
 
-        bot.editMessageReplyMarkup(
-            { inline_keyboard: [] },
-            {
-                chat_id: query.message.chat.id,
-                message_id: query.message.message_id
-            }
-        );
-
-        bot.answerCallbackQuery(query.id, {
-            text: "❌ User Rejected"
-        });
-
-    }
+    bot.sendMessage(
+        msg.chat.id,
+        `❌ User Rejected Successfully`
+    );
 
 });
