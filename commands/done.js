@@ -4,9 +4,30 @@ const saveUser = require("../utils/saveUser");
 
 const forms = {};
 
+function isCooldown(userId) {
+
+    const now = Date.now();
+
+    if (global.cooldown.has(userId)) {
+
+        const last = global.cooldown.get(userId);
+
+        if (now - last < 3000) {
+            return true;
+        }
+
+    }
+
+    global.cooldown.set(userId, now);
+
+    return false;
+}
+
 bot.onText(/\/sent([\s\S]*)/, async (msg, match) => {
 
     const userId = msg.from.id;
+
+    if (isCooldown(userId)) return;
 
     const formText = match[1]?.trim();
 
@@ -15,11 +36,6 @@ bot.onText(/\/sent([\s\S]*)/, async (msg, match) => {
         return bot.sendMessage(
             msg.chat.id,
             `❌ Form লিখে /sent দিন।
-
-Example:
-
-/sent
-নাম: Your Name
 
 🏷️ ${config.brand}`
         );
@@ -32,7 +48,7 @@ Example:
         msg.chat.id,
         `✅ Form Save হয়েছে।
 
-এখন /done দিন Submit করার জন্য।
+📩 এখন /done দিন Submit করার জন্য।
 
 🏷️ ${config.brand}`
     );
@@ -41,8 +57,9 @@ Example:
 
 bot.onText(/\/done/, async (msg) => {
 
-    const user = msg.from;
-    const userId = user.id;
+    const userId = msg.from.id;
+
+    if (isCooldown(userId)) return;
 
     const form = forms[userId];
 
@@ -50,20 +67,14 @@ bot.onText(/\/done/, async (msg) => {
 
         return bot.sendMessage(
             msg.chat.id,
-            `❌ আগে Form পাঠান তারপর /done দিন।
-
-Example:
-
-/sent
-আপনার form
-
-তারপর:
-/done
+            `❌ আগে /sent দিয়ে Form পাঠান তারপর /done দিন।
 
 🏷️ ${config.brand}`
         );
 
     }
+
+    const user = msg.from;
 
     const data = {
         id: user.id,
@@ -106,7 +117,7 @@ ${form}
 
     bot.sendMessage(
         msg.chat.id,
-        `✅ আপনার Form সফলভাবে Submit হয়েছে।
+        `✅ আপনার Form Submit হয়েছে।
 
 ⏳ এখন Admin approval এর জন্য অপেক্ষা করুন।
 
