@@ -1,0 +1,13 @@
+{
+  "name": "emon-bhai-registration-bot",
+  "version": "1.0.0",
+  "description": "Telegram Trading Community Registration Bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "fs-extra": "^11.2.0"
+  }
+}
