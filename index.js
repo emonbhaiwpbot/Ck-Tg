@@ -1,5 +1,5 @@
-const TelegramBot = require('node-telegram-bot-api');
-const config = require('./config.json');
+const TelegramBot = require("node-telegram-bot-api");
+const config = require("./config.json");
 
 const bot = new TelegramBot(config.token, {
     polling: true
@@ -8,8 +8,10 @@ const bot = new TelegramBot(config.token, {
 global.bot = bot;
 global.config = config;
 
-require('./commands/start');
-require('./commands/done');
-require('./commands/admin');
+global.cooldown = new Map();
 
-console.log(`${config.brand} Bot Running...`);
+require("./commands/start");
+require("./commands/done");
+require("./commands/admin");
+
+console.log(`✅ ${config.brand} Bot Running`);
